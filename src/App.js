@@ -3,13 +3,16 @@ import React, { useState, useEffect } from "react";
 import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
 import Persons from "./components/Persons";
+import Notification from "./components/Notification";
 import personService from "./services/persons";
+import "./index.css";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [nameFilter, setNameFilter] = useState("");
+  const [successMessage, setSuccessMessage] = useState(null);
 
   const hook = () => {
     personService.getAll().then((allPeople) => {
@@ -22,11 +25,14 @@ const App = () => {
     e.preventDefault();
     const result = persons.filter((i) => i.name === newName);
     if (result.length === 0) {
-      personService
-        .create({ name: newName, number: newNumber })
-        .then((person) => {
-          setPersons(persons.concat(person));
-        });
+      const newObject = { name: newName, number: newNumber };
+      personService.create(newObject).then((person) => {
+        setPersons(persons.concat(person));
+      });
+      setSuccessMessage(`${newObject.name} has been added to the phonebook`);
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 5000);
       setNewName("");
       setNewNumber("");
     } else {
@@ -47,14 +53,18 @@ const App = () => {
   };
 
   const handleDelete = (id) => {
-    personService.deletePerson(id).then((person) => {
-      setPersons(persons.filter((i) => i.id !== id));
-    });
+    const confirm = window.confirm("you sure you want  to delete this person?");
+    if (confirm) {
+      personService.deletePerson(id).then((person) => {
+        setPersons(persons.filter((i) => i.id !== id));
+      });
+    }
   };
 
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={successMessage} />
       <Filter nameFilter={nameFilter} handleFilter={handleFilter} />
       <h1>Add a New</h1>
       <PersonForm
